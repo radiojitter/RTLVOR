@@ -3,7 +3,7 @@
 ##################################################
 # GNU Radio Python Flow Graph
 # Title: Vor Receive Realtime Clean
-# Generated: Fri Oct  5 15:19:02 2018
+# Generated: Sun Oct  7 08:42:05 2018
 ##################################################
 
 if __name__ == '__main__':
@@ -17,6 +17,7 @@ if __name__ == '__main__':
             print "Warning: failed to XInitThreads()"
 
 from gnuradio import analog
+from gnuradio import audio
 from gnuradio import blocks
 from gnuradio import eng_notation
 from gnuradio import fft
@@ -26,10 +27,12 @@ from gnuradio import wxgui
 from gnuradio.eng_option import eng_option
 from gnuradio.filter import firdes
 from gnuradio.filter import pfb
+from gnuradio.wxgui import forms
 from gnuradio.wxgui import scopesink2
 from grc_gnuradio import wxgui as grc_wxgui
 from optparse import OptionParser
 import osmosdr
+import threading
 import time
 import wx
 
@@ -44,9 +47,12 @@ class VOR_Receive_RealTime_Clean(grc_wxgui.top_block_gui):
         ##################################################
         # Variables
         ##################################################
+        self.morse_vol = morse_vol = 10
         self.samp_rate = samp_rate = 32000
         self.rtl_gain = rtl_gain = 42
         self.rtl_freq = rtl_freq = 115.5e6+64
+        self.morse_gain = morse_gain = pow(10,morse_vol/10)
+        self.morse_amp_level = morse_amp_level = 0
         self.PI = PI = 3.14159
 
         ##################################################
@@ -88,6 +94,42 @@ class VOR_Receive_RealTime_Clean(grc_wxgui.top_block_gui):
                   True)
         self.pfb_decimator_ccf_0.declare_sample_delay(0)
 
+        _morse_vol_sizer = wx.BoxSizer(wx.VERTICAL)
+        self._morse_vol_text_box = forms.text_box(
+        	parent=self.GetWin(),
+        	sizer=_morse_vol_sizer,
+        	value=self.morse_vol,
+        	callback=self.set_morse_vol,
+        	label='Morse Volume (dB):',
+        	converter=forms.float_converter(),
+        	proportion=0,
+        )
+        self._morse_vol_slider = forms.slider(
+        	parent=self.GetWin(),
+        	sizer=_morse_vol_sizer,
+        	value=self.morse_vol,
+        	callback=self.set_morse_vol,
+        	minimum=-100,
+        	maximum=100,
+        	num_steps=100,
+        	style=wx.SL_HORIZONTAL,
+        	cast=float,
+        	proportion=1,
+        )
+        self.Add(_morse_vol_sizer)
+
+        def _morse_amp_level_probe():
+            while True:
+                val = self.morse_amp.level()
+                try:
+                    self.set_morse_amp_level(val)
+                except AttributeError:
+                    pass
+                time.sleep(1.0 / (25))
+        _morse_amp_level_thread = threading.Thread(target=_morse_amp_level_probe)
+        _morse_amp_level_thread.daemon = True
+        _morse_amp_level_thread.start()
+
         self.hilbert_fc_0 = filter.hilbert_fc(64, firdes.WIN_HAMMING, 6.76)
         self.goertzel_fc_0_0 = fft.goertzel_fc(samp_rate, 3200, 30)
         self.goertzel_fc_0 = fft.goertzel_fc(samp_rate, 3200, 30)
@@ -100,8 +142,11 @@ class VOR_Receive_RealTime_Clean(grc_wxgui.top_block_gui):
         self.blocks_integrate_xx_0 = blocks.integrate_cc(8, 1)
         self.blocks_complex_to_mag_squared_0 = blocks.complex_to_mag_squared(1)
         self.blocks_complex_to_mag_0 = blocks.complex_to_mag(1)
+        self.band_pass_filter_0_1 = filter.interp_fir_filter_fff(1, firdes.band_pass(
+        	morse_gain, samp_rate, 1015, 1022, 500, firdes.WIN_HAMMING, 6.76))
         self.band_pass_filter_0 = filter.fir_filter_fcc(1, firdes.complex_band_pass(
         	100, samp_rate, 1015, 1022, 500, firdes.WIN_HAMMING, 6.76))
+        self.audio_sink_0 = audio.sink(samp_rate, '', True)
         self.analog_wfm_rcv_0 = analog.wfm_rcv(
         	quad_rate=samp_rate,
         	audio_decimation=1,
@@ -114,7 +159,9 @@ class VOR_Receive_RealTime_Clean(grc_wxgui.top_block_gui):
         ##################################################
         self.connect((self.analog_wfm_rcv_0, 0), (self.goertzel_fc_0_0, 0))
         self.connect((self.band_pass_filter_0, 0), (self.blocks_complex_to_mag_squared_0, 0))
+        self.connect((self.band_pass_filter_0_1, 0), (self.audio_sink_0, 0))
         self.connect((self.blocks_complex_to_mag_0, 0), (self.band_pass_filter_0, 0))
+        self.connect((self.blocks_complex_to_mag_0, 0), (self.band_pass_filter_0_1, 0))
         self.connect((self.blocks_complex_to_mag_0, 0), (self.goertzel_fc_0, 0))
         self.connect((self.blocks_complex_to_mag_0, 0), (self.hilbert_fc_0, 0))
         self.connect((self.blocks_complex_to_mag_squared_0, 0), (self.blocks_integrate_xx_1, 0))
@@ -128,6 +175,15 @@ class VOR_Receive_RealTime_Clean(grc_wxgui.top_block_gui):
         self.connect((self.pfb_decimator_ccf_0, 0), (self.blocks_complex_to_mag_0, 0))
         self.connect((self.rtlsdr_source_0, 0), (self.pfb_decimator_ccf_0, 0))
 
+    def get_morse_vol(self):
+        return self.morse_vol
+
+    def set_morse_vol(self, morse_vol):
+        self.morse_vol = morse_vol
+        self.set_morse_gain(pow(10,self.morse_vol/10))
+        self._morse_vol_slider.set_value(self.morse_vol)
+        self._morse_vol_text_box.set_value(self.morse_vol)
+
     def get_samp_rate(self):
         return self.samp_rate
 
@@ -139,6 +195,7 @@ class VOR_Receive_RealTime_Clean(grc_wxgui.top_block_gui):
         self.goertzel_fc_0_0.set_rate(self.samp_rate)
         self.goertzel_fc_0.set_rate(self.samp_rate)
         self.freq_xlating_fft_filter_ccc_0.set_taps((firdes.low_pass(1,self.samp_rate,480*2,500*2)))
+        self.band_pass_filter_0_1.set_taps(firdes.band_pass(self.morse_gain, self.samp_rate, 1015, 1022, 500, firdes.WIN_HAMMING, 6.76))
         self.band_pass_filter_0.set_taps(firdes.complex_band_pass(100, self.samp_rate, 1015, 1022, 500, firdes.WIN_HAMMING, 6.76))
 
     def get_rtl_gain(self):
@@ -154,6 +211,19 @@ class VOR_Receive_RealTime_Clean(grc_wxgui.top_block_gui):
     def set_rtl_freq(self, rtl_freq):
         self.rtl_freq = rtl_freq
         self.rtlsdr_source_0.set_center_freq(self.rtl_freq, 0)
+
+    def get_morse_gain(self):
+        return self.morse_gain
+
+    def set_morse_gain(self, morse_gain):
+        self.morse_gain = morse_gain
+        self.band_pass_filter_0_1.set_taps(firdes.band_pass(self.morse_gain, self.samp_rate, 1015, 1022, 500, firdes.WIN_HAMMING, 6.76))
+
+    def get_morse_amp_level(self):
+        return self.morse_amp_level
+
+    def set_morse_amp_level(self, morse_amp_level):
+        self.morse_amp_level = morse_amp_level
 
     def get_PI(self):
         return self.PI
