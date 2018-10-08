@@ -279,6 +279,9 @@ namespace VORViewer
         {
             try
             {
+                if (deg < 0.0)
+                    deg += 360.0;
+
                 Bitmap b = DrawCompass(deg, 0, 360, 0, 360, pbCompass.Size);
                 pbCompass.Image = b;
 
