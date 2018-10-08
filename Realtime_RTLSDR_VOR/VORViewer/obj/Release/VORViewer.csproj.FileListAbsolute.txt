@@ -1,7 +1,0 @@
-D:\Projects\RadioJitter\VOR\FinalSW\VORViewer\bin\Release\VORViewer.exe
-D:\Projects\RadioJitter\VOR\FinalSW\VORViewer\bin\Release\VORViewer.pdb
-D:\Projects\RadioJitter\VOR\FinalSW\VORViewer\obj\Release\VORViewer.FormMain.resources
-D:\Projects\RadioJitter\VOR\FinalSW\VORViewer\obj\Release\VORViewer.Properties.Resources.resources
-D:\Projects\RadioJitter\VOR\FinalSW\VORViewer\obj\Release\VORViewer.csproj.GenerateResource.Cache
-D:\Projects\RadioJitter\VOR\FinalSW\VORViewer\obj\Release\VORViewer.exe
-D:\Projects\RadioJitter\VOR\FinalSW\VORViewer\obj\Release\VORViewer.pdb
