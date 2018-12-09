@@ -12,4 +12,4 @@ Real time reception and display of VOR using RTL-SDR, GNU-Radio and VORViewer
 
 [Arnav Mukhopadhyay](http://gudduarnav.com/)  
 [RadioJitter Concepts Lab](https://www.radiojitter.com/)    
-Bengaluru, India  
+**Bengaluru, India**  
