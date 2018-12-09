@@ -10,6 +10,6 @@ Real time reception and display of VOR using RTL-SDR, GNU-Radio and VORViewer
 * **\Realtime_RTLSDR_VOR\VORViewer_EXE**  : Contains the application with settings file. Run the program name **VORViewer.exe** on Microsoft Windows platform, after running the GNURadio based VOR Receiver, to view the VOR compass.  
 * **\Realtime_RTLSDR_VOR\VORViewer_EXE**  : Contains 32-bit float IQ file downsampled to a sample rate of 32 KSPS for real time VOR signals.  
 
-[http://gudduarnav.com/](Arnav Mukhopadhyay)  
-[https://www.radiojitter.com/](RadioJitter Concepts Lab)  
+[Arnav Mukhopadhyay](http://gudduarnav.com/)  
+[RadioJitter Concepts Lab](https://www.radiojitter.com/)    
 Bengaluru, India  
